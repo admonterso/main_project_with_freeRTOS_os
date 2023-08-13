@@ -1,0 +1,12 @@
+main.c:65:6:HAL_UART_RxCpltCallback	6
+main.c:117:5:main	1
+main.c:214:6:SystemClock_Config	3
+main.c:254:13:MX_I2C1_Init	2
+main.c:285:13:MX_SPI1_Init	2
+main.c:320:13:MX_USART1_UART_Init	2
+main.c:350:13:MX_USART2_UART_Init	2
+main.c:380:13:MX_GPIO_Init	1
+main.c:431:6:read_card_task	7
+main.c:482:6:process_status_task	12
+main.c:586:6:send_card_data_MQTT	1
+main.c:611:6:Error_Handler	1

@@ -1,0 +1,2 @@
+../Core/Src/extra_functions_for_work.c:11:7:convertNumberToCharArray	40	static
+../Core/Src/extra_functions_for_work.c:38:6:jumpToAddress	32	static,ignoring_inline_asm
