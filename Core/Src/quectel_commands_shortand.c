@@ -32,3 +32,9 @@ void MQTTPubToTopic(int length){
 		HAL_Delay(30);
 
 }
+void send_card_data(int length, uint8_t* data){
+	MQTTPubToTopic(length);
+	HAL_Delay(50);
+
+	HAL_UART_Transmit(&huart1, data, length, 100);
+}

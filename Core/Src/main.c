@@ -32,6 +32,18 @@ int check = 0;
 uint8_t postData[250];
 SemaphoreHandle_t semaphore_to_enable_status_process;
 SemaphoreHandle_t semaphore_to_do_post;
+
+
+//for trecking space taken by tasks
+UBaseType_t uxHighWaterMark_for_card_read;
+UBaseType_t uxHighWaterMark_for_process_status;
+UBaseType_t uxHighWaterMark_for_post_mqtt;
+//for trecking space taken by tasks
+
+//events
+EventGroupHandle_t status_event;
+EventBits_t event_bits;
+//events
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -47,6 +59,12 @@ SemaphoreHandle_t semaphore_to_do_post;
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
+
+#define card_read_allowed ( 1UL << 0UL )
+#define request_make_request_allowed ( 1UL << 1UL )
+#define card_read_NOT_allowed ( 1UL << 2UL )
+
+const EventBits_t all_bits = ( card_read_NOT_allowed | request_make_request_allowed | card_read_allowed );
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -60,7 +78,8 @@ UART_HandleTypeDef huart2;
 osThreadId read_cardsHandle;
 osThreadId process_statusHandle;
 osThreadId postenabledHandle;
-//osSemaphoreId semaphore_to_do_postHandle;
+osThreadId checkHandle;
+osSemaphoreId semaphore_to_do_postHandle;
 /* USER CODE BEGIN PV */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -102,6 +121,7 @@ static void MX_USART2_UART_Init(void);
 void read_card_task(void const * argument);
 void process_status_task(void const * argument);
 void send_card_data_MQTT(void const * argument);
+void check_MQTT(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
@@ -163,12 +183,15 @@ int main(void)
 
   /* Create the semaphores(s) */
   /* definition and creation of semaphore_to_do_post */
-//  osSemaphoreDef(semaphore_to_do_post);
-//  semaphore_to_do_postHandle = osSemaphoreCreate(osSemaphore(semaphore_to_do_post), 1);
+  osSemaphoreDef(semaphore_to_do_post);
+  semaphore_to_do_postHandle = osSemaphoreCreate(osSemaphore(semaphore_to_do_post), 1);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   semaphore_to_enable_status_process =  xSemaphoreCreateBinary();
   semaphore_to_do_post = xSemaphoreCreateBinary();
+
+
+  status_event = xEventGroupCreate();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -179,20 +202,26 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of read_cards */
-  osThreadDef(read_cards, read_card_task, osPriorityNormal, 0, 512);
+  osThreadDef(read_cards, read_card_task, osPriorityNormal, 0, 254);
   read_cardsHandle = osThreadCreate(osThread(read_cards), NULL);
 
   /* definition and creation of process_status */
-  osThreadDef(process_status, process_status_task, osPriorityAboveNormal, 0, 512);
+  osThreadDef(process_status, process_status_task, osPriorityAboveNormal, 0, 200);
   process_statusHandle = osThreadCreate(osThread(process_status), NULL);
 
   /* definition and creation of postenabled */
-  osThreadDef(postenabled, send_card_data_MQTT, osPriorityAboveNormal, 0, 512);
+  osThreadDef(postenabled, send_card_data_MQTT, osPriorityAboveNormal, 0, 128);
   postenabledHandle = osThreadCreate(osThread(postenabled), NULL);
+
+  /* definition and creation of check */
+  osThreadDef(check, check_MQTT, osPriorityNormal, 0, 254);
+  checkHandle = osThreadCreate(osThread(check), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   printMiadetBarati(0, 2);
 
+  xEventGroupSetBits(status_event, card_read_allowed);
+  event_bits = xEventGroupGetBits(status_event);
 
   /* USER CODE END RTOS_THREADS */
 
@@ -431,7 +460,7 @@ static void MX_GPIO_Init(void)
 void read_card_task(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-	UBaseType_t uxHighWaterMark;
+
 
 	for(;;){
 
@@ -440,10 +469,11 @@ void read_card_task(void const * argument)
 //
 //		 HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 //
-
+		xEventGroupWaitBits(status_event, card_read_allowed, pdFALSE, pdTRUE, portMAX_DELAY);
+		event_bits = xEventGroupGetBits(status_event);
 		uint8_t card_read_stat = cardOperationWithBlockedSector(postData);
 		 //printMiadetBarati(0, 2);
-		uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+		uxHighWaterMark_for_card_read = uxTaskGetStackHighWaterMark( NULL );
 
 		 if(card_read_stat){
 			 uint8_t bpundCount = 0;
@@ -465,25 +495,32 @@ void read_card_task(void const * argument)
 
 			 if(postEnable == 0){
 				 CardReadSound();
-				 uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
-
-				 xSemaphoreGive( semaphore_to_do_post );
+				 uxHighWaterMark_for_card_read = uxTaskGetStackHighWaterMark( NULL );
+				 //xEventGroupSetBits(status_event, card_read_NOT_allowed);
+				 xEventGroupSetBits(status_event,request_make_request_allowed);
+				 event_bits = xEventGroupGetBits(status_event);
 
 			 }
 
 		 }
-		 osDelay(1000);
+		 osDelay(100);
 		}
   /* USER CODE END 5 */
 }
 
 /* USER CODE BEGIN Header_process_status_task */
+void vApplicationIdleHook( void )
+{
+ /* This hook function does nothing but increment a counter. */
+}
+
 /* USER CODE END Header_process_status_task */
 void process_status_task(void const * argument)
 {
   /* USER CODE BEGIN process_status_task */
 	for(;;){
 		xSemaphoreTake( semaphore_to_enable_status_process, portMAX_DELAY );
+		uxHighWaterMark_for_process_status = uxTaskGetStackHighWaterMark( NULL );
 		int Status = takeStatus(BUFFER, i);
 		i = 0;
 		uint8_t dispData[50];
@@ -497,7 +534,7 @@ void process_status_task(void const * argument)
 
 				prinWarmateba(0, 3);
 				insert(postData);
-
+				uxHighWaterMark_for_process_status = uxTaskGetStackHighWaterMark( NULL );
 				LENGTH = strlen((char*)postData);
 				MQTTPubToTopic(LENGTH);
 				HAL_Delay(10);
@@ -519,6 +556,9 @@ void process_status_task(void const * argument)
 				HAL_Delay(1000);
 				printMiadetBarati(0, 2);
 				memset(postData, 0, sizeof(postData));
+				uxHighWaterMark_for_process_status = uxTaskGetStackHighWaterMark( NULL );
+				xEventGroupClearBits(status_event, all_bits);
+				xEventGroupSetBits(status_event, card_read_allowed);
 				break;
 			case 293:
 
@@ -588,20 +628,40 @@ void send_card_data_MQTT(void const * argument)
   /* USER CODE BEGIN send_card_data_MQTT */
   /* Infinite loop */
 
+
 	//xSemaphoreTake(semaphore_to_do_post, portMAX_DELAY);
+	for(;;)
+	{
+		xEventGroupWaitBits(status_event, request_make_request_allowed, pdTRUE, pdTRUE, portMAX_DELAY);
+
+		xEventGroupSetBits(status_event, card_read_NOT_allowed);
+		xEventGroupClearBits(status_event, card_read_allowed);
+		//vSemaphoreDelete(semaphore_to_do_post);
+		printDaicadet(0, 4);
+		send_card_data(LENGTH, postData);
+
+		uxHighWaterMark_for_post_mqtt = uxTaskGetStackHighWaterMark( NULL );
+
+	}
+  /* USER CODE END send_card_data_MQTT */
+}
+
+/* USER CODE BEGIN Header_check_MQTT */
+/**
+* @brief Function implementing the check thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_check_MQTT */
+void check_MQTT(void const * argument)
+{
+  /* USER CODE BEGIN check_MQTT */
+  /* Infinite loop */
   for(;;)
   {
-	  	  xSemaphoreTake(semaphore_to_do_post, portMAX_DELAY);
-		  //vSemaphoreDelete(semaphore_to_do_post);
-		  printDaicadet(0, 4);
-
-		  MQTTPubToTopic(LENGTH);
-		  HAL_Delay(50);
-
-		  HAL_UART_Transmit(&huart1, postData, LENGTH, 100);
-
+    osDelay(100);
   }
-  /* USER CODE END send_card_data_MQTT */
+  /* USER CODE END check_MQTT */
 }
 
 /**

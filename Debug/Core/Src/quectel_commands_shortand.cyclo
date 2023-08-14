@@ -1,1 +1,2 @@
 quectel_commands_shortand.c:22:6:MQTTPubToTopic	1
+quectel_commands_shortand.c:35:6:send_card_data	1

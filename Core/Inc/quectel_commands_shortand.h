@@ -9,5 +9,5 @@
 #define INC_QUECTEL_COMMANDS_SHORTAND_H_
 
 void MQTTPubToTopic(int length);
-
+void send_card_data(int length, uint8_t* data);
 #endif /* INC_QUECTEL_COMMANDS_SHORTAND_H_ */
