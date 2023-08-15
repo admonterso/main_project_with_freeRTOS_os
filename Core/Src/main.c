@@ -26,7 +26,8 @@ uint64_t terminalID;
 char * terminalStr;
 uint8_t MQTT_CHECK_DATA[100];
 uint8_t BUFFER[50];
-int LENGTH;
+int LENGTH_OF_CARD_DATA;
+int LENGTH_OF_CHECK_DATA;
 int i = 0;
 int check = 0;
 uint8_t postData[250];
@@ -60,11 +61,12 @@ EventBits_t event_bits;
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
-#define card_read_allowed ( 1UL << 0UL )
-#define request_make_request_allowed ( 1UL << 1UL )
-#define card_read_NOT_allowed ( 1UL << 2UL )
+#define card_read_allowed 			 	( 1UL << 0UL )
+#define make_card_request			 	( 1UL << 1UL )
+#define card_requst_made	 		 	( 1UL << 2UL )
+#define make_check_request	 		 	( 1UL << 3UL )
 
-const EventBits_t all_bits = ( card_read_NOT_allowed | request_make_request_allowed | card_read_allowed );
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -174,7 +176,7 @@ int main(void)
   terminalStr = convertNumberToCharArray(terminalID);
 //
  sprintf((char*) MQTT_CHECK_DATA, "{\"operationType\":\"check\",\"content\":{\"terminalID\":\"%s\",\"firmwareVersion\":%ld}}",terminalStr, version);
-
+ LENGTH_OF_CHECK_DATA = strlen((char*)MQTT_CHECK_DATA);
 
   /* USER CODE END 2 */
 
@@ -469,7 +471,7 @@ void read_card_task(void const * argument)
 //
 //		 HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 //
-		xEventGroupWaitBits(status_event, card_read_allowed, pdFALSE, pdTRUE, portMAX_DELAY);
+		xEventGroupWaitBits(status_event, card_read_allowed, pdFALSE, pdTRUE, portMAX_DELAY); //( xEventGroup, uxBitsToWaitFor, xClearOnExit,  xWaitForAllBits, xTicksToWait )
 		event_bits = xEventGroupGetBits(status_event);
 		uint8_t card_read_stat = cardOperationWithBlockedSector(postData);
 		 //printMiadetBarati(0, 2);
@@ -479,9 +481,9 @@ void read_card_task(void const * argument)
 			 uint8_t bpundCount = 0;
 			 uint8_t postEnable = 0;
 
-			 LENGTH = strlen((char*)postData);
+			 LENGTH_OF_CARD_DATA = strlen((char*)postData);
 
-			 for(int i = 0; i< LENGTH+5; i++){
+			 for(int i = 0; i< LENGTH_OF_CARD_DATA+5; i++){
 
 				 if(postData[i]== '{' || postData[i] == '}'){
 					 bpundCount++;
@@ -497,7 +499,7 @@ void read_card_task(void const * argument)
 				 CardReadSound();
 				 uxHighWaterMark_for_card_read = uxTaskGetStackHighWaterMark( NULL );
 				 //xEventGroupSetBits(status_event, card_read_NOT_allowed);
-				 xEventGroupSetBits(status_event,request_make_request_allowed);
+				 xEventGroupSetBits(status_event, make_card_request);
 				 event_bits = xEventGroupGetBits(status_event);
 
 			 }
@@ -530,24 +532,17 @@ void process_status_task(void const * argument)
 				HAL_GPIO_TogglePin(GPIOB, RELAY_Pin);
 				AppruveSound();
 				HAL_GPIO_WritePin(RELAY_GPIO_Port, RELAY_Pin, 1);
-
-
 				prinWarmateba(0, 3);
 				insert(postData);
-				uxHighWaterMark_for_process_status = uxTaskGetStackHighWaterMark( NULL );
-				LENGTH = strlen((char*)postData);
-				MQTTPubToTopic(LENGTH);
-				HAL_Delay(10);
-				HAL_UART_Transmit(&huart1, postData, LENGTH, 10);
-
+				LENGTH_OF_CARD_DATA = strlen((char*)postData);
+				send_data_to_MQTT(LENGTH_OF_CARD_DATA, postData);
+				MQTTPubToTopic(LENGTH_OF_CARD_DATA);
 				break;
 			case 200:
 				//AppruveSound();
 				check++;
 				break;
 			case 201:
-				//HAL_GPIO_TogglePin(GPIOB, RELAY_Pin);
-
 				takeData(BUFFER, strlen((char*)BUFFER), dispData);
 				printBalansi(0, 0);
 				HD44780_PrintStr((char*) dispData);
@@ -557,12 +552,10 @@ void process_status_task(void const * argument)
 				printMiadetBarati(0, 2);
 				memset(postData, 0, sizeof(postData));
 				uxHighWaterMark_for_process_status = uxTaskGetStackHighWaterMark( NULL );
-				xEventGroupClearBits(status_event, all_bits);
 				xEventGroupSetBits(status_event, card_read_allowed);
 				break;
 			case 293:
 
-				//takeData(buffer, count, dispData);
 				HD44780_Clear();
 				HD44780_SetCursor(0, 0);
 				printUcxoBaratia(0,0);
@@ -571,7 +564,6 @@ void process_status_task(void const * argument)
 				printMiadetBarati(0, 2);
 				break;
 			case 291:
-				//takeData(buffer, count, dispData);
 				HD44780_Clear();
 				HD44780_SetCursor(0, 0);
 				printBlansiAraa(0, 0);
@@ -580,30 +572,13 @@ void process_status_task(void const * argument)
 				printMiadetBarati(0, 2);
 				break;
 			case 296:
-				//takeData(buffer, count, dispData);
-				HD44780_Clear();
-				HD44780_SetCursor(0, 0);
-				HD44780_PrintStr((char*) dispData);
-				ErrorSound();
-				HAL_Delay(3000);
 				printMiadetBarati(0, 2);
 				break;
 			case 297:
-				//takeData(buffer, count, dispData);
-				HD44780_Clear();
-				HD44780_SetCursor(0, 0);
-				HD44780_PrintStr((char*) dispData);
-				ErrorSound();
-				HAL_Delay(3000);
 				printMiadetBarati(0, 2);
 				break;
 			case 299:
-				//takeData(buffer, count, dispData);
-				HD44780_Clear();
-				HD44780_SetCursor(0, 0);
-				HD44780_PrintStr((char*) dispData);
-				ErrorSound();
-				HAL_Delay(3000);
+
 				printMiadetBarati(0, 2);
 				break;
 			default:
@@ -627,19 +602,24 @@ void send_card_data_MQTT(void const * argument)
 {
   /* USER CODE BEGIN send_card_data_MQTT */
   /* Infinite loop */
-
-
+	const EventBits_t bits_to_wait = ( make_card_request | make_check_request );
+	EventBits_t xEventGroupValue;
 	//xSemaphoreTake(semaphore_to_do_post, portMAX_DELAY);
 	for(;;)
 	{
-		xEventGroupWaitBits(status_event, request_make_request_allowed, pdTRUE, pdTRUE, portMAX_DELAY);
+		xEventGroupValue = xEventGroupWaitBits(status_event, bits_to_wait, pdTRUE, pdFALSE, portMAX_DELAY); //( xEventGroup, uxBitsToWaitFor, xClearOnExit,  xWaitForAllBits, xTicksToWait )
 
-		xEventGroupSetBits(status_event, card_read_NOT_allowed);
-		xEventGroupClearBits(status_event, card_read_allowed);
-		//vSemaphoreDelete(semaphore_to_do_post);
-		printDaicadet(0, 4);
-		send_card_data(LENGTH, postData);
+		if((xEventGroupValue & make_card_request) != 0){
+			xEventGroupClearBits(status_event, card_read_allowed);
+			printDaicadet(0, 4);
+			send_data_to_MQTT(LENGTH_OF_CARD_DATA, postData);
+			xEventGroupSetBits(status_event, card_requst_made);
+		}
 
+		if((xEventGroupValue & make_check_request) != 0){
+
+			send_data_to_MQTT(LENGTH_OF_CHECK_DATA, MQTT_CHECK_DATA);
+		}
 		uxHighWaterMark_for_post_mqtt = uxTaskGetStackHighWaterMark( NULL );
 
 	}
@@ -659,7 +639,12 @@ void check_MQTT(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(100);
+	EventBits_t value_on_event = xEventGroupGetBits( status_event );
+    osDelay(500);
+
+
+    //xEventGroupSetBits(status_event, make_check_request);
+
   }
   /* USER CODE END check_MQTT */
 }
