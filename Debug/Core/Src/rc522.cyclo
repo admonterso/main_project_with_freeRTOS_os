@@ -20,6 +20,6 @@ rc522.c:297:6:MFRC522_Reset	1
 rc522.c:301:6:MFRC522_AntennaOn	2
 rc522.c:308:6:MFRC522_AntennaOff	1
 rc522.c:312:6:MFRC522_Halt	1
-rc522.c:322:9:cardOperationWithBlockedSector	18
-rc522.c:417:6:cardOperation	35
 rc522.c:594:6:led	2
+rc522.c:602:10:read_card_data	10
+rc522.c:647:9:card_detected	2

@@ -1,8 +1,9 @@
-stm32f1xx_it.c:71:6:NMI_Handler	1
-stm32f1xx_it.c:86:6:HardFault_Handler	1
-stm32f1xx_it.c:101:6:MemManage_Handler	1
-stm32f1xx_it.c:116:6:BusFault_Handler	1
-stm32f1xx_it.c:131:6:UsageFault_Handler	1
-stm32f1xx_it.c:146:6:DebugMon_Handler	1
-stm32f1xx_it.c:159:6:SysTick_Handler	2
-stm32f1xx_it.c:188:6:USART1_IRQHandler	1
+core_cm3.h:1762:34:__NVIC_SystemReset	1
+stm32f1xx_it.c:73:6:NMI_Handler	1
+stm32f1xx_it.c:88:6:HardFault_Handler	0
+stm32f1xx_it.c:103:6:MemManage_Handler	1
+stm32f1xx_it.c:118:6:BusFault_Handler	1
+stm32f1xx_it.c:133:6:UsageFault_Handler	1
+stm32f1xx_it.c:148:6:DebugMon_Handler	1
+stm32f1xx_it.c:161:6:SysTick_Handler	2
+stm32f1xx_it.c:190:6:USART1_IRQHandler	1

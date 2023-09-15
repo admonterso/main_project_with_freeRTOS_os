@@ -20,6 +20,6 @@
 ../Core/Src/rc522.c:301:6:MFRC522_AntennaOn	16	static
 ../Core/Src/rc522.c:308:6:MFRC522_AntennaOff	8	static
 ../Core/Src/rc522.c:312:6:MFRC522_Halt	24	static
-../Core/Src/rc522.c:322:9:cardOperationWithBlockedSector	472	static
-../Core/Src/rc522.c:417:6:cardOperation	720	static
 ../Core/Src/rc522.c:594:6:led	24	static
+../Core/Src/rc522.c:602:10:read_card_data	48	static
+../Core/Src/rc522.c:647:9:card_detected	32	static
