@@ -55,7 +55,7 @@ int i = 0;
 int check = 0;
 uint8_t counter = 1; // counter for read blocks
 uint8_t postData[150];
-uint8_t final_id[35];
+
 uint8_t K = 0;//for i replacemant
 uint32_t Timer = 0; //timer for counter
 
@@ -359,7 +359,6 @@ static void MX_SPI1_Init(void)
   /* USER CODE END SPI1_Init 2 */
 
 }
-
 /**
   * @brief USART1 Initialization Function
   * @param None
@@ -480,7 +479,6 @@ void read_card_task(void const * argument)
 {
   /* USER CODE BEGIN 5 */
 
-
 	for(;;){
 
 //		 MQTTPubToTopic(strlen((char*)MQTT_CHECK_DATA));
@@ -497,12 +495,17 @@ void read_card_task(void const * argument)
 			uxHighWaterMark_for_card_read = uxTaskGetStackHighWaterMark( NULL );
 		#endif
 			if(card_detected_flag){
-						 Timer = HAL_GetTick();
+						uint8_t final_id[35];
+						Timer = HAL_GetTick();
 						 while(counter < 3){
+
 							  uint8_t* data_ptr = read_card_data(counter);
 							  if(data_ptr != NULL){
 								  for(int i = 0; i<16; i++){
-									  final_id[K++] = data_ptr[i];
+									  if(data_ptr[i] != '\0'){
+										  final_id[K++] = data_ptr[i];
+									  }
+
 								  }
 								  counter++;
 							  }
@@ -517,8 +520,11 @@ void read_card_task(void const * argument)
 							 sprintf((char*)postData, "{\"operationType\":\"payment\",\"content\":{\"terminalID\":\"%s\",\"cardID\":\"%s\"}}",terminalStr, final_id);
 							 LENGTH_OF_CARD_DATA = strlen((char*)postData);
 							 CardReadSound();
+							 counter = 1;
+							 K = 0;
 							 xEventGroupSetBits(status_event, make_card_request);
 						 }
+						 memset(final_id, 0, sizeof(final_id));
 					 }
 		 osDelay(100);
 		}
@@ -579,7 +585,6 @@ void process_status_task(void const * argument)
 				printMiadetBarati(0, 2);
 				break;
 			case 293:
-
 				HD44780_Clear();
 				HD44780_SetCursor(0, 0);
 				printUcxoBaratia(0,0);
@@ -601,7 +606,9 @@ void process_status_task(void const * argument)
 				break;
 
 			default:
+
 				memset(dispData, 0, sizeof(dispData));
+				memset(postData, 0, sizeof(postData));
 				printMiadetBarati(0, 2);
 				xEventGroupSetBits(status_event, card_read_allowed);
 				xEventGroupClearBits(status_event, card_requst_made);
@@ -635,6 +642,7 @@ void send_card_data_MQTT(void const * argument)
 			printDaicadet(0, 4);
 			send_data_to_MQTT(LENGTH_OF_CARD_DATA, postData);
 			card_request_time = xTaskGetTickCount();
+
 			xEventGroupSetBits(status_event, card_requst_made);
 		}
 
