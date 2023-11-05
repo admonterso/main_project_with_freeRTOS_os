@@ -42,15 +42,26 @@
 #define make_check_request	 		 	( 1UL << 3UL )
 #define check_request_made	 		 	( 1UL << 4UL )
 
+#define SET_PRICE_STATUS 				222
+#define NO_BALLANCE_STATUS				291
+#define UNKNOW_CARD_STATUS				293
+#define MEMBERSHIP_PASS_STATUS			210 // NOT YET ADDED
+#define CONNECTION_CHECK_STATUS			200
+#define PAYMANT_OK_STATUS				202
+#define GET_BALLANCE_STATUS				201
+#define CARD_IS_NOT_ATIVE_STATUS		297
+uint8_t PRICE[5] = "xx";
 uint8_t store_input_flag = 0;
 uint8_t c;
 uint32_t version;
 uint64_t terminalID;
 char * terminalStr;
 uint8_t MQTT_CHECK_DATA[100];
+uint8_t MQTT_GIVE_CONFIG[100];
 uint8_t BUFFER[50];
 uint8_t LENGTH_OF_CARD_DATA;
 uint8_t LENGTH_OF_CHECK_DATA;
+uint8_t LENGTH_OF_GIVE_CONFIG;
 int i = 0;
 int check = 0;
 uint8_t counter = 1; // counter for read blocks
@@ -189,7 +200,9 @@ int main(void)
 //
  sprintf((char*) MQTT_CHECK_DATA, "{\"operationType\":\"check\",\"content\":{\"terminalID\":\"%s\",\"firmwareVersion\":%ld}}",terminalStr, version);
  LENGTH_OF_CHECK_DATA = strlen((char*)MQTT_CHECK_DATA);
-
+ sprintf((char*) MQTT_GIVE_CONFIG, "{\"operationType\":\"config\",\"content\":{\"terminalID\":\"%s\"}}",terminalStr);
+ LENGTH_OF_GIVE_CONFIG = strlen((char*)MQTT_GIVE_CONFIG);
+ send_data_to_MQTT(LENGTH_OF_GIVE_CONFIG,MQTT_GIVE_CONFIG);
  after_start = xTaskGetTickCount();
   /* USER CODE END 2 */
 
@@ -231,7 +244,7 @@ int main(void)
   checkHandle = osThreadCreate(osThread(check), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  printMiadetBarati(0, 2);
+  printMiadetBarati(0, 2, PRICE);
 
   xEventGroupSetBits(status_event, card_read_allowed);
   event_bits = xEventGroupGetBits(status_event);
@@ -490,11 +503,12 @@ void read_card_task(void const * argument)
 		event_bits = xEventGroupGetBits(status_event);
 		uint8_t card_detected_flag = card_detected();
 
-		 //printMiadetBarati(0, 2);
+		 //printMiadetBarati(0, 2, PRICE);
 		#if DEBUG_STACK == 1
 			uxHighWaterMark_for_card_read = uxTaskGetStackHighWaterMark( NULL );
 		#endif
-			if(card_detected_flag){
+
+			if(card_detected_flag && event_bits != 17){
 						uint8_t final_id[35];
 						Timer = HAL_GetTick();
 						 while(counter < 3){
@@ -553,7 +567,7 @@ void process_status_task(void const * argument)
 		uint8_t dispData[50];
 		//HAL_UART_Transmit(&huart1, BUFFER, sizeof BUFFER / sizeof BUFFER[0], 10);
 		switch(Status){
-			case 202:
+			case PAYMANT_OK_STATUS:
 				check_event_stat = xEventGroupGetBits( status_event );
 				HAL_GPIO_TogglePin(GPIOB, RELAY_Pin);
 				AppruveSound();
@@ -566,15 +580,15 @@ void process_status_task(void const * argument)
 				}
 				else{
 					HAL_Delay(1000);
-					printMiadetBarati(0, 2);
+					printMiadetBarati(0, 2, PRICE);
 				}
 				HAL_GPIO_TogglePin(GPIOB, RELAY_Pin);
 				break;
-			case 200:
+			case CONNECTION_CHECK_STATUS:
 
 				xEventGroupClearBits(status_event, check_request_made);
 				break;
-			case 201:
+			case GET_BALLANCE_STATUS:
 				takeData(BUFFER, strlen((char*)BUFFER), dispData);
 				printBalansi(0, 0);
 				HD44780_PrintStr((char*) dispData);
@@ -582,34 +596,57 @@ void process_status_task(void const * argument)
 				memset(postData, 0, sizeof(postData));
 				xEventGroupSetBits(status_event, card_read_allowed);
 				xEventGroupClearBits(status_event, card_requst_made);
-				printMiadetBarati(0, 2);
+				printMiadetBarati(0, 2, PRICE);
 				break;
-			case 293:
+			case UNKNOW_CARD_STATUS:
 				HD44780_Clear();
 				HD44780_SetCursor(0, 0);
 				printUcxoBaratia(0,0);
 				ErrorSound();
 				HAL_Delay(1000);
-				printMiadetBarati(0, 2);
+				printMiadetBarati(0, 2, PRICE);
 				xEventGroupSetBits(status_event, card_read_allowed);
 				xEventGroupClearBits(status_event, card_requst_made);
 				break;
-			case 291:
+			case NO_BALLANCE_STATUS:
 				HD44780_Clear();
 				HD44780_SetCursor(0, 0);
 				printBlansiAraa(0, 0);
 				ErrorSound();
 				HAL_Delay(1000);
-				printMiadetBarati(0, 2);
+				printMiadetBarati(0, 2, PRICE);
 				xEventGroupSetBits(status_event, card_read_allowed);
 				xEventGroupClearBits(status_event, card_requst_made);
 				break;
-
+			case SET_PRICE_STATUS:
+				takeData(BUFFER, strlen((char*)BUFFER), PRICE);
+				printMiadetBarati(0, 2, PRICE);
+				break;
+			case CARD_IS_NOT_ATIVE_STATUS:
+				HD44780_Clear();
+				HD44780_SetCursor(0, 0);
+				printAraaAqtiuri(0, 2);
+				ErrorSound();
+				HAL_Delay(1000);
+				printMiadetBarati(0, 2, PRICE);
+				xEventGroupSetBits(status_event, card_read_allowed);
+				xEventGroupClearBits(status_event, card_requst_made);
+				break;
+			case MEMBERSHIP_PASS_STATUS:
+				HAL_GPIO_TogglePin(GPIOB, RELAY_Pin);
+				AppruveSound();
+				printSaabonento(0, 3);
+				HAL_Delay(1000);
+				HAL_GPIO_TogglePin(GPIOB, RELAY_Pin);
+				printMiadetBarati(0, 2, PRICE);
+				xEventGroupSetBits(status_event, card_read_allowed);
+				xEventGroupClearBits(status_event, card_requst_made);
+				break;
 			default:
 
 				memset(dispData, 0, sizeof(dispData));
 				memset(postData, 0, sizeof(postData));
-				printMiadetBarati(0, 2);
+				printMiadetBarati(0, 2, PRICE);
 				xEventGroupSetBits(status_event, card_read_allowed);
 				xEventGroupClearBits(status_event, card_requst_made);
 
@@ -684,7 +721,7 @@ void check_MQTT(void const * argument)
 		}
 
 	}
-	if(xTaskGetTickCount() - after_start >= 5*60000){
+	if(xTaskGetTickCount() - after_start >= 5*60000 && value_on_event == 1 ){
 		after_start = xTaskGetTickCount();
 		value_on_event = xEventGroupGetBits( status_event );
 		xEventGroupSetBits(status_event, make_check_request);

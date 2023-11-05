@@ -10,10 +10,10 @@
 #include "stm32f1xx_hal.h"
 
 void printDaicadet(uint8_t row, uint8_t column);
-void printMzadVar(uint8_t row, uint8_t column);
-void printVemzadebi(uint8_t row, uint8_t column);
+void printAraaAqtiuri(uint8_t row, uint8_t column);
+void printSaabonento(uint8_t row, uint8_t column);
 void printBalansi(uint8_t row, uint8_t column);
-void printMiadetBarati(uint8_t row, uint8_t column);
+void printMiadetBarati(uint8_t row, uint8_t column, uint8_t* price);
 void printUcxoBaratia(uint8_t row, uint8_t column);
 void printBlansiAraa(uint8_t row, uint8_t column);
 void printItvirteba(uint8_t row, uint8_t column);

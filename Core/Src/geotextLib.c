@@ -10,6 +10,16 @@
 #include "stdio.h"
 #include <string.h>
 #include <stdlib.h>
+uint8_t qGeo[] = {
+	  0x01,
+	  0x01,
+	  0x07,
+	  0x09,
+	  0x01,
+	  0x01,
+	  0x09,
+	  0x07
+};
 
 uint8_t nGeo[] = {
 	  0x0E,
@@ -255,32 +265,40 @@ void printItvirteba(uint8_t row, uint8_t column){
 	HD44780_PrintStr("!");
 }
 
-void printMzadVar(uint8_t row, uint8_t column){
+void printAraaAqtiuri(uint8_t row, uint8_t column){
 	HD44780_Clear();
-	HD44780_CreateSpecialChar(1, mGeo);
+	HD44780_CreateSpecialChar(1, aGeo);
 	HD44780_SetCursor(column, row);
-	HD44780_PrintSpecialChar(1);
-	HD44780_CreateSpecialChar(2, zGeo);
+	HD44780_PrintSpecialChar(1); //a
+	HD44780_CreateSpecialChar(2, rGeo);
 	HD44780_SetCursor(column+1, row);
-	HD44780_PrintSpecialChar(2);
-	HD44780_CreateSpecialChar(3, aGeo);
+	HD44780_PrintSpecialChar(2); //r
 	HD44780_SetCursor(column+2, row);
-	HD44780_PrintSpecialChar(3);
-	HD44780_CreateSpecialChar(4, dGeo);
+	HD44780_PrintSpecialChar(1); // a
 	HD44780_SetCursor(column+3, row);
-	HD44780_PrintSpecialChar(4);
-	HD44780_CreateSpecialChar(5, vGeo);
+	HD44780_PrintSpecialChar(1); //a
 	HD44780_SetCursor(column+5, row);
-	HD44780_PrintSpecialChar(5);
+	HD44780_PrintSpecialChar(1); // a
+	HD44780_CreateSpecialChar(3, qGeo);
 	HD44780_SetCursor(column+6, row);
-	HD44780_PrintSpecialChar(3);
-	HD44780_CreateSpecialChar(6, rGeo);
+	HD44780_PrintSpecialChar(3); // q
+	HD44780_CreateSpecialChar(4, TGeo);
 	HD44780_SetCursor(column+7, row);
-	HD44780_PrintSpecialChar(6);
+	HD44780_PrintSpecialChar(4); // T
+	HD44780_CreateSpecialChar(5, iGeo);
 	HD44780_SetCursor(column+8, row);
-	HD44780_PrintStr("!");
-	HD44780_SetCursor(6, 1);
-	HD44780_PrintStr("-_-");
+	HD44780_PrintSpecialChar(5); // i
+	HD44780_CreateSpecialChar(6, uGeo);
+	HD44780_SetCursor(column+9, row);
+	HD44780_PrintSpecialChar(6); // u
+	HD44780_CreateSpecialChar(7, rGeo);
+	HD44780_SetCursor(column+10, row);
+	HD44780_PrintSpecialChar(7); // r
+	HD44780_SetCursor(column+11, row);
+	HD44780_PrintSpecialChar(5); // i
+
+
+
 }
 void printUcxoBaratia(uint8_t row, uint8_t column){
 		HD44780_Clear();
@@ -374,7 +392,15 @@ void printBlansiAraa(uint8_t row, uint8_t column){
 	HD44780_PrintStr("!");
 }
 
-void printMiadetBarati(uint8_t row, uint8_t column){
+void printMiadetBarati(uint8_t row, uint8_t column, uint8_t* price){
+		uint8_t price_in_gel_str[20];
+		int price_in_tetri = atoi((char*)price);
+		if(price_in_tetri < 10){
+			sprintf((char*)price_in_gel_str, "0.0%s", price);
+		}
+		else{
+			sprintf((char*)price_in_gel_str, "0.%s", price);
+		}
 		HD44780_Clear();
 		HD44780_CreateSpecialChar(1, mGeo);
 		HD44780_SetCursor(column, row);
@@ -409,9 +435,9 @@ void printMiadetBarati(uint8_t row, uint8_t column){
 		HD44780_SetCursor(column+12, row);
 		HD44780_PrintSpecialChar(2);
 		HD44780_SetCursor(column+2, row+1);
-		HD44780_PrintStr("0.10 GEL");
-
-
+		HD44780_PrintStr((char*)price_in_gel_str);
+		HD44780_SetCursor(column+7, row+1);
+		HD44780_PrintStr("GEL");
 }
 
 void prinWarmateba(uint8_t row, uint8_t column){
@@ -495,35 +521,35 @@ void printDaicadet(uint8_t row, uint8_t column){
 	HD44780_PrintSpecialChar(6);
 	HD44780_PrintStr("!");
 }
-void printVemzadebi(uint8_t row, uint8_t column){
+void printSaabonento(uint8_t row, uint8_t column){
 	HD44780_Clear();
-	HD44780_CreateSpecialChar(1, vGeo);
+	HD44780_CreateSpecialChar(1, sGeo);
 	HD44780_SetCursor(column, row);
-	HD44780_PrintSpecialChar(1);
-	HD44780_CreateSpecialChar(2, eGeo);
+	HD44780_PrintSpecialChar(1); //s
+	HD44780_CreateSpecialChar(2, aGeo);
 	HD44780_SetCursor(column+1, row);
-	HD44780_PrintSpecialChar(2);
-	HD44780_CreateSpecialChar(3, mGeo);
+	HD44780_PrintSpecialChar(2); //a
 	HD44780_SetCursor(column+2, row);
-	HD44780_PrintSpecialChar(3);
-	HD44780_CreateSpecialChar(4, zGeo);
+	HD44780_PrintSpecialChar(2); //a
+	HD44780_CreateSpecialChar(3, bGeo);
 	HD44780_SetCursor(column+3, row);
-	HD44780_PrintSpecialChar(4);
-	HD44780_CreateSpecialChar(5, aGeo);
+	HD44780_PrintSpecialChar(3);
+	HD44780_CreateSpecialChar(4, oGeo);
 	HD44780_SetCursor(column+4, row);
-	HD44780_PrintSpecialChar(5);
-	HD44780_CreateSpecialChar(6, dGeo);
+	HD44780_PrintSpecialChar(4);
+	HD44780_CreateSpecialChar(5, nGeo);
 	HD44780_SetCursor(column+5, row);
-	HD44780_PrintSpecialChar(6);
+	HD44780_PrintSpecialChar(5);
+	HD44780_CreateSpecialChar(6, eGeo);
 	HD44780_SetCursor(column+6, row);
-	HD44780_PrintSpecialChar(2);
-	HD44780_CreateSpecialChar(7, bGeo);
+	HD44780_PrintSpecialChar(6);
 	HD44780_SetCursor(column+7, row);
-	HD44780_PrintSpecialChar(7);
-	HD44780_CreateSpecialChar(8, iGeo);
+	HD44780_PrintSpecialChar(5);
+	HD44780_CreateSpecialChar(7, TGeo);
 	HD44780_SetCursor(column+8, row);
-	HD44780_PrintSpecialChar(8);
-	HD44780_PrintStr("!");
+	HD44780_PrintSpecialChar(7);
+	HD44780_SetCursor(column+9, row);
+	HD44780_PrintSpecialChar(4);
 }
 
 void printBalansi(uint8_t row, uint8_t column){
