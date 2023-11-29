@@ -716,12 +716,12 @@ void check_MQTT(void const * argument)
 	EventBits_t value_on_event = xEventGroupGetBits( status_event );
 	if((value_on_event & card_requst_made) != 0){
 		time_after_card_request_made = xTaskGetTickCount() - card_request_time;
-		if(time_after_card_request_made >= 15000){
+		if(time_after_card_request_made >= 20000){
 			 NVIC_SystemReset();
 		}
 
 	}
-	if(xTaskGetTickCount() - after_start >= 5*60000 && value_on_event == 1 ){
+	if(xTaskGetTickCount() - after_start >= 10*60000 && value_on_event == 1 ){
 		after_start = xTaskGetTickCount();
 		value_on_event = xEventGroupGetBits( status_event );
 		xEventGroupSetBits(status_event, make_check_request);
@@ -731,7 +731,7 @@ void check_MQTT(void const * argument)
 
 	if((value_on_event & check_request_made) != 0){
 		time_after_check_request_made = xTaskGetTickCount() - check_request_time;
-		if(time_after_check_request_made >= 5000){
+		if(time_after_check_request_made >= 10000){
 			NVIC_SystemReset();
 		}
 	}

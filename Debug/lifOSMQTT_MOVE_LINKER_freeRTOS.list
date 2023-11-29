@@ -4309,9 +4309,9 @@ void check_MQTT(void const * argument)
  800df80:	681b      	ldr	r3, [r3, #0]
  800df82:	1ad3      	subs	r3, r2, r3
  800df84:	613b      	str	r3, [r7, #16]
-		if(time_after_card_request_made >= 15000){
+		if(time_after_card_request_made >= 20000){
  800df86:	693b      	ldr	r3, [r7, #16]
- 800df88:	f643 2297 	movw	r2, #14999	; 0x3a97
+ 800df88:	f644 621f 	movw	r2, #19999	; 0x4e1f
  800df8c:	4293      	cmp	r3, r2
  800df8e:	d901      	bls.n	800df94 <check_MQTT+0x3c>
 			 NVIC_SystemReset();
@@ -4319,7 +4319,7 @@ void check_MQTT(void const * argument)
 		}
 
 	}
-	if(xTaskGetTickCount() - after_start >= 5*60000 && value_on_event == 1 ){
+	if(xTaskGetTickCount() - after_start >= 10*60000 && value_on_event == 1 ){
  800df94:	f004 fef8 	bl	8012d88 <xTaskGetTickCount>
  800df98:	4602      	mov	r2, r0
  800df9a:	4b1b      	ldr	r3, [pc, #108]	; (800e008 <check_MQTT+0xb0>)
@@ -4365,9 +4365,9 @@ void check_MQTT(void const * argument)
  800dfe2:	681b      	ldr	r3, [r3, #0]
  800dfe4:	1ad3      	subs	r3, r2, r3
  800dfe6:	60fb      	str	r3, [r7, #12]
-		if(time_after_check_request_made >= 5000){
+		if(time_after_check_request_made >= 10000){
  800dfe8:	68fb      	ldr	r3, [r7, #12]
- 800dfea:	f241 3287 	movw	r2, #4999	; 0x1387
+ 800dfea:	f242 720f 	movw	r2, #9999	; 0x270f
  800dfee:	4293      	cmp	r3, r2
  800dff0:	d901      	bls.n	800dff6 <check_MQTT+0x9e>
 			NVIC_SystemReset();
@@ -4382,7 +4382,7 @@ void check_MQTT(void const * argument)
  800e000:	200005b4 	.word	0x200005b4
  800e004:	200005a4 	.word	0x200005a4
  800e008:	200005ac 	.word	0x200005ac
- 800e00c:	000493df 	.word	0x000493df
+ 800e00c:	000927bf 	.word	0x000927bf
  800e010:	200005a8 	.word	0x200005a8
 
 0800e014 <Error_Handler>:
