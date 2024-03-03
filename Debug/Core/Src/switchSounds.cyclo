@@ -3,5 +3,6 @@ switchSounds.c:36:6:RelaySwitch	1
 switchSounds.c:42:6:ErrorSound	1
 switchSounds.c:52:6:CardReadSound	1
 switchSounds.c:59:6:takeData	4
-switchSounds.c:76:6:insert	2
-switchSounds.c:93:5:takeStatus	6
+switchSounds.c:75:9:check_if_terminal_is_free	6
+switchSounds.c:97:6:insert	2
+switchSounds.c:114:5:takeStatus	6

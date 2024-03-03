@@ -2,6 +2,7 @@
 ../Core/Src/switchSounds.c:36:6:RelaySwitch	8	static
 ../Core/Src/switchSounds.c:42:6:ErrorSound	8	static
 ../Core/Src/switchSounds.c:52:6:CardReadSound	8	static
-../Core/Src/switchSounds.c:59:6:takeData	40	static
-../Core/Src/switchSounds.c:76:6:insert	40	static
-../Core/Src/switchSounds.c:93:5:takeStatus	32	static
+../Core/Src/switchSounds.c:59:6:takeData	32	static
+../Core/Src/switchSounds.c:75:9:check_if_terminal_is_free	24	static
+../Core/Src/switchSounds.c:97:6:insert	40	static
+../Core/Src/switchSounds.c:114:5:takeStatus	32	static

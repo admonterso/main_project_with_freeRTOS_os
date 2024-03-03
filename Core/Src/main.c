@@ -41,8 +41,10 @@
 #define card_requst_made	 		 	( 1UL << 2UL )
 #define make_check_request	 		 	( 1UL << 3UL )
 #define check_request_made	 		 	( 1UL << 4UL )
+#define config_requst_made	 		 	( 1UL << 5UL )
+#define free_termnal 		 		 	( 1UL << 6UL )
 
-#define SET_PRICE_STATUS 				222
+#define GET_CONGIF		 				222
 #define NO_BALLANCE_STATUS				291
 #define UNKNOW_CARD_STATUS				293
 #define MEMBERSHIP_PASS_STATUS			210 // NOT YET ADDED
@@ -247,6 +249,7 @@ int main(void)
   printMiadetBarati(0, 2, PRICE);
 
   xEventGroupSetBits(status_event, card_read_allowed);
+  xEventGroupSetBits(status_event, config_requst_made);
   event_bits = xEventGroupGetBits(status_event);
 
   /* USER CODE END RTOS_THREADS */
@@ -508,7 +511,7 @@ void read_card_task(void const * argument)
 			uxHighWaterMark_for_card_read = uxTaskGetStackHighWaterMark( NULL );
 		#endif
 
-			if(card_detected_flag && event_bits != 17){
+			if(card_detected_flag && event_bits != 17){ // if card detecteed and check requst is not made
 						uint8_t final_id[35];
 						Timer = HAL_GetTick();
 						 while(counter < 3){
@@ -536,7 +539,18 @@ void read_card_task(void const * argument)
 							 CardReadSound();
 							 counter = 1;
 							 K = 0;
-							 xEventGroupSetBits(status_event, make_card_request);
+							 if((event_bits & free_termnal) != 0){
+								 prinWarmateba(0, 3);
+								 AppruveSound();
+								 osDelay(1000);
+								 //RelaySwitch();
+								 printMiadetBarati(0, 2, PRICE);
+
+							 }
+							 else{
+								 xEventGroupSetBits(status_event, make_card_request);
+							 }
+
 						 }
 						 memset(final_id, 0, sizeof(final_id));
 					 }
@@ -618,9 +632,18 @@ void process_status_task(void const * argument)
 				xEventGroupSetBits(status_event, card_read_allowed);
 				xEventGroupClearBits(status_event, card_requst_made);
 				break;
-			case SET_PRICE_STATUS:
+			case GET_CONGIF:
 				takeData(BUFFER, strlen((char*)BUFFER), PRICE);
 				printMiadetBarati(0, 2, PRICE);
+				if(PRICE[0] == '0'){
+					  xEventGroupSetBits(status_event, free_termnal);
+					  HAL_GPIO_WritePin(GPIOB, RELAY_Pin, 1);
+				}else{
+					  xEventGroupClearBits(status_event, free_termnal);
+					  HAL_GPIO_WritePin(GPIOB, RELAY_Pin, 0);
+				}
+				xEventGroupClearBits(status_event, config_requst_made);
+
 				break;
 			case CARD_IS_NOT_ATIVE_STATUS:
 				HD44780_Clear();
@@ -674,6 +697,7 @@ void send_card_data_MQTT(void const * argument)
 	{
 		xEventGroupValue = xEventGroupWaitBits(status_event, bits_to_wait, pdTRUE, pdFALSE, portMAX_DELAY); //( xEventGroup, uxBitsToWaitFor, xClearOnExit,  xWaitForAllBits, xTicksToWait )
 
+
 		if((xEventGroupValue & make_card_request) != 0){
 			xEventGroupClearBits(status_event, card_read_allowed);
 			printDaicadet(0, 4);
@@ -717,7 +741,9 @@ void check_MQTT(void const * argument)
 	if((value_on_event & card_requst_made) != 0){
 		time_after_card_request_made = xTaskGetTickCount() - card_request_time;
 		if(time_after_card_request_made >= 20000){
-			 NVIC_SystemReset();
+			AppruveSound();
+			RelaySwitch();
+			NVIC_SystemReset();
 		}
 
 	}
@@ -728,7 +754,9 @@ void check_MQTT(void const * argument)
 
 
 	}
-
+	if(xTaskGetTickCount() - after_start >= 5000 && (value_on_event & config_requst_made) != 0 ){
+		NVIC_SystemReset();
+		}
 	if((value_on_event & check_request_made) != 0){
 		time_after_check_request_made = xTaskGetTickCount() - check_request_time;
 		if(time_after_check_request_made >= 10000){

@@ -18,4 +18,5 @@ void CardReadSound();
 int takeStatus(uint8_t* data, int length);
 void insert(uint8_t* main);
 void takeData(uint8_t* data, int length, uint8_t* dataToDisplay);
+uint8_t check_if_terminal_is_free(uint8_t* data, int length);
 #endif /* SRC_SWITCHSOUNDS_H_ */

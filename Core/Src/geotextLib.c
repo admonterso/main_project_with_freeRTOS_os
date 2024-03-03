@@ -436,8 +436,8 @@ void printMiadetBarati(uint8_t row, uint8_t column, uint8_t* price){
 		HD44780_PrintSpecialChar(2);
 		HD44780_SetCursor(column+2, row+1);
 		HD44780_PrintStr((char*)price_in_gel_str);
-		HD44780_SetCursor(column+7, row+1);
-		HD44780_PrintStr("GEL");
+		HD44780_SetCursor(column+6, row+1);
+		HD44780_PrintStr(" GEL");
 }
 
 void prinWarmateba(uint8_t row, uint8_t column){

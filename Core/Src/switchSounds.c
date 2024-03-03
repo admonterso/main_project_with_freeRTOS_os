@@ -57,7 +57,7 @@ void CardReadSound() {
 }
 
 void takeData(uint8_t* data, int length, uint8_t* dataToDisplay){
-	int i,k,j;
+	uint8_t i,k,j;
 	k = 0;
 	for(i =0; i< length; i++){
 	  if(data[i] == ',')
@@ -70,6 +70,27 @@ void takeData(uint8_t* data, int length, uint8_t* dataToDisplay){
 	}
 
 	dataToDisplay[k] = '\0';
+
+}
+uint8_t check_if_terminal_is_free(uint8_t* data, int length){
+	uint8_t i,k;
+	k = 0;
+	for(i =0; i< length; i++){
+	  if(data[i] == ',')
+	  {
+		  k++;
+	  }
+	  if(k >= 2)
+	  {
+		  if(data[i+1] == '1'){
+			  return 1;
+		  }
+		  if(data[i+1] == '0'){
+			  return 0;
+		  }
+	  }
+	}
+	return 0;
 
 }
 
